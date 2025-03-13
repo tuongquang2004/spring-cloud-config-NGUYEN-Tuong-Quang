@@ -119,13 +119,13 @@ public class ConfigClientProperties {
 	private String password;
 
 	/**
-	 * The URI of the remote server (default http://localhost:8888).
+	 * The configServerUri of the remote server (default http://localhost:8888).
 	 */
-	private String[] uri = { "http://localhost:8888" };
+	private String[] configServerUri = { "http://localhost:8888" };
 
 	/**
 	 * The strategy to use when call to server fails and there are multiple URLs
-	 * configured on the uri property (default {@link MultipleUriStrategy#ALWAYS}).
+	 * configured on the configServerUri property (default {@link MultipleUriStrategy#ALWAYS}).
 	 */
 	private MultipleUriStrategy multipleUriStrategy = MultipleUriStrategy.ALWAYS;
 
@@ -206,11 +206,11 @@ public class ConfigClientProperties {
 	}
 
 	public String[] getUri() {
-		return this.uri;
+		return this.configServerUri;
 	}
 
 	public void setUri(String[] url) {
-		this.uri = url;
+		this.configServerUri = url;
 	}
 
 	public MultipleUriStrategy getMultipleUriStrategy() {
@@ -355,23 +355,23 @@ public class ConfigClientProperties {
 
 	private Credentials extractCredentials(int index) {
 		Credentials result = new Credentials();
-		int noOfUrl = this.uri.length;
+		int noOfUrl = this.configServerUri.length;
 		if (index < 0 || index >= noOfUrl) {
 			throw new IllegalStateException("Trying to access an invalid array index");
 		}
-		String uri = this.uri[index];
-		result.uri = uri;
+		String configServerUri = this.configServerUri[index];
+		result.configServerUri = configServerUri;
 		Credentials explicitCredentials = getUsernamePassword();
 		result.username = explicitCredentials.username;
 		result.password = explicitCredentials.password;
 		try {
-			URL url = new URL(uri);
+			URL url = new URL(configServerUri);
 			String userInfo = url.getUserInfo();
 			// no credentials in url, return explicit credentials
 			if (ObjectUtils.isEmpty(userInfo) || ":".equals(userInfo)) {
 				return result;
 			}
-			result.uri = UriComponentsBuilder.fromUriString(uri, UriComponentsBuilder.ParserType.WHAT_WG)
+			result.configServerUri = UriComponentsBuilder.fromUriString(configServerUri, UriComponentsBuilder.ParserType.WHAT_WG)
 				.userInfo(null)
 				.build()
 				.toUriString();
@@ -382,7 +382,7 @@ public class ConfigClientProperties {
 			}
 
 			int sepIndex = userInfo.indexOf(":");
-			// set username and password from uri
+			// set username and password from configServerUri
 			result.username = userInfo.substring(0, sepIndex);
 			result.password = userInfo.substring(sepIndex + 1);
 
@@ -402,7 +402,7 @@ public class ConfigClientProperties {
 			return result;
 		}
 		catch (MalformedURLException | UnsupportedEncodingException e) {
-			throw new IllegalStateException("Invalid URL: " + uri, e);
+			throw new IllegalStateException("Invalid URL: " + configServerUri, e);
 		}
 	}
 
@@ -438,8 +438,8 @@ public class ConfigClientProperties {
 	@Override
 	public String toString() {
 		return "ConfigClientProperties [enabled=" + this.enabled + ", profile=" + this.profile + ", name=" + this.name
-				+ ", label=" + this.label + ", username=" + this.username + ", password=" + this.password + ", uri="
-				+ Arrays.toString(this.uri) + ", mediaType=" + this.mediaType + ", discovery=" + this.discovery
+				+ ", label=" + this.label + ", username=" + this.username + ", password=" + this.password + ", configServerUri="
+				+ Arrays.toString(this.configServerUri) + ", mediaType=" + this.mediaType + ", discovery=" + this.discovery
 				+ ", failFast=" + this.failFast + ", token=" + this.token + ", requestConnectTimeout="
 				+ this.requestConnectTimeout + ", requestReadTimeout=" + this.requestReadTimeout + ", sendState="
 				+ this.sendState + ", headers=" + this.headers + ", sendAllLabels=" + this.sendAllLabels + "]";
@@ -454,7 +454,7 @@ public class ConfigClientProperties {
 
 		private String password;
 
-		private String uri;
+		private String configServerUri;
 
 		public String getUsername() {
 			return this.username;
@@ -465,7 +465,7 @@ public class ConfigClientProperties {
 		}
 
 		public String getUri() {
-			return this.uri;
+			return this.configServerUri;
 		}
 
 	}
