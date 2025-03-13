@@ -53,24 +53,21 @@ import org.springframework.util.StringUtils;
  */
 public class JdbcEnvironmentRepository implements EnvironmentRepository, Ordered {
 
+	// 1. private with static comes first
 	private static final Log logger = LogFactory.getLog(JdbcEnvironmentRepository.class);
 
+	// 2. instance variables come second
 	private final JdbcTemplate jdbc;
-
 	private final PropertiesResultSetExtractor extractor;
 
 	private int order;
-
 	private String sql;
-
 	private String sqlWithoutProfile;
-
 	private boolean failOnError;
-
 	private boolean configIncomplete;
-
 	private String defaultLabel;
 
+	// 3. Constructor comes third
 	@Deprecated
 	public JdbcEnvironmentRepository(JdbcTemplate jdbc, JdbcEnvironmentProperties properties) {
 		this(jdbc, properties, new PropertiesResultSetExtractor());
@@ -88,14 +85,7 @@ public class JdbcEnvironmentRepository implements EnvironmentRepository, Ordered
 		this.defaultLabel = properties.getDefaultLabel();
 	}
 
-	public String getSql() {
-		return this.sql;
-	}
-
-	public void setSql(String sql) {
-		this.sql = sql;
-	}
-
+	// 4. all public methods come fourth
 	@Override
 	public Environment findOne(String application, String profile, String label) {
 		String config = application;
@@ -143,6 +133,32 @@ public class JdbcEnvironmentRepository implements EnvironmentRepository, Ordered
 		return environment;
 	}
 
+	@Override
+	public int getOrder() {
+		return this.order;
+	}
+
+	public void setOrder(int order) {
+		this.order = order;
+	}
+
+	public boolean isFailOnError() {
+		return failOnError;
+	}
+
+	public void setFailOnError(boolean failOnError) {
+		this.failOnError = failOnError;
+	}
+
+	public String getSql() {
+		return this.sql;
+	}
+
+	public void setSql(String sql) {
+		this.sql = sql;
+	}
+
+	// 5. Private method comes fifth
 	private void addPropertySource(Environment environment, String application, String profile, String label) {
 		try {
 			Map<String, Object> source;
@@ -171,23 +187,7 @@ public class JdbcEnvironmentRepository implements EnvironmentRepository, Ordered
 		}
 	}
 
-	@Override
-	public int getOrder() {
-		return this.order;
-	}
-
-	public void setOrder(int order) {
-		this.order = order;
-	}
-
-	public boolean isFailOnError() {
-		return failOnError;
-	}
-
-	public void setFailOnError(boolean failOnError) {
-		this.failOnError = failOnError;
-	}
-
+	// 6. Static class comes last
 	public static class PropertiesResultSetExtractor implements ResultSetExtractor<Map<String, Object>> {
 
 		@Override
@@ -202,3 +202,4 @@ public class JdbcEnvironmentRepository implements EnvironmentRepository, Ordered
 	}
 
 }
+
