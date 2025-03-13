@@ -191,10 +191,12 @@ public class EnvironmentController {
 		return getSuccess(json, MediaType.APPLICATION_JSON);
 	}
 
+	private static final int EMPTY_LENGTH = 0;
+
 	private String getPropertiesString(Map<String, Object> properties) {
 		StringBuilder output = new StringBuilder();
 		for (Entry<String, Object> entry : properties.entrySet()) {
-			if (output.length() > 0) {
+			if (output.length() > EMPTY_LENGTH) {
 				output.append("\n");
 			}
 			output.append(entry.getKey()).append(": ").append(entry.getValue());
