@@ -38,6 +38,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.util.StringUtils;
 
+import org.springframework.cloud.config.server.exception.ConfigurationRetrievalException;
+
+
 /**
  * An {@link EnvironmentRepository} that picks up data from a relational database. The
  * database should have a table called "PROPERTIES" with columns "APPLICATION", "PROFILE",
@@ -188,13 +191,10 @@ public class JdbcEnvironmentRepository implements EnvironmentRepository, Ordered
 		}
 		catch (DataAccessException e) {
 			if (!failOnError) {
-				if (logger.isDebugEnabled()) {
-					logger.debug("Failed to retrieve configuration from JDBC Repository", e);
-				}
+				logger.warn("Database query failed, returning empty configuration.", e);
+				return; 
 			}
-			else {
-				throw e;
-			}
+			throw new ConfigurationRetrievalException("Error retrieving configuration from database", e);
 		}
 	}
 
