@@ -177,14 +177,11 @@ public class JdbcEnvironmentRepository implements EnvironmentRepository, Ordered
 		try {
 			Map<String, Object> source;
 			String name;
-			if (profile != null) {
-				source = this.jdbc.query(this.sql, this.extractor, application, profile, label);
-				name = application + "-" + profile;
-			}
-			else {
-				source = this.jdbc.query(this.sqlWithoutProfile, this.extractor, application, label);
-				name = application;
-			}
+			String query = (profile != null) ? this.sql : this.sqlWithoutProfile;
+			Object[] params = (profile != null) ? new Object[]{application, profile, label} : new Object[]{application, label};
+
+			source = this.jdbc.query(query, this.extractor, params);
+			name = (profile != null) ? application + "-" + profile : application;
 			if (source != null && !source.isEmpty()) {
 				environment.add(new PropertySource(name, source));
 			}
