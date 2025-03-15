@@ -27,13 +27,27 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.config.environment.Environment;
 import org.springframework.cloud.config.server.environment.JdbcEnvironmentRepositoryTests.ApplicationConfiguration;
+import org.springframework.cloud.config.server.exception.ConfigurationRetrievalException;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.test.annotation.DirtiesContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import static org.mockito.Mockito.*;
+
 
 /**
  * @author Dave Syer
@@ -44,6 +58,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 				"spring.sql.init.data-locations=classpath:data-jdbc.sql" })
 @AutoConfigureTestDatabase
 @DirtiesContext
+
+
 public class JdbcEnvironmentRepositoryTests {
 
 	@Autowired
@@ -250,5 +266,29 @@ public class JdbcEnvironmentRepositoryTests {
 	protected static class ApplicationConfiguration {
 
 	}
-
 }
+
+class RepositoryTest {
+
+	@Mock
+	private JdbcTemplate jdbcTemplate;
+	
+	@InjectMocks
+	private MyRepository repository;
+	
+	@BeforeEach
+	void setUp() {
+		MockitoAnnotations.openMocks(this);
+	}
+	
+	@Test
+	void whenDatabaseQueryFails_thenThrowConfigurationRetrievalException() {
+		when(jdbcTemplate.query(anyString(), any(ResultSetExtractor.class), any(), any(), any()))
+			thenThrow(new DataAccessException("DB error") {});
+	
+		assertThrows(ConfigurationRetrievalException.class, () -> {
+			repository.findOne("app", "default", "main");
+		});
+	}
+}
+
