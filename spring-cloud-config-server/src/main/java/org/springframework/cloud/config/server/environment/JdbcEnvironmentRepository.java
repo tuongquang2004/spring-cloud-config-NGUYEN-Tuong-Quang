@@ -88,49 +88,60 @@ public class JdbcEnvironmentRepository implements EnvironmentRepository, Ordered
 	// 4. all public methods come fourth
 	@Override
 	public Environment findOne(String application, String profile, String label) {
-		String config = application;
-		if (StringUtils.isEmpty(label)) {
-			label = this.defaultLabel;
-		}
-		if (!StringUtils.hasText(profile)) {
-			profile = "default";
-		}
-		// fallback to previous logic: always include profile "default"
-		if (configIncomplete && !profile.startsWith("default")) {
-			profile = "default," + profile;
-		}
-		String[] profiles = StringUtils.commaDelimitedListToStringArray(profile);
-		Environment environment = new Environment(application, profiles, label, null, null);
-		if (!config.startsWith("application")) {
-			config = "application," + config;
-		}
-		List<String> applications = new ArrayList<>(
-				new LinkedHashSet<>(Arrays.asList(StringUtils.commaDelimitedListToStringArray(config))));
-		List<String> envs = new ArrayList<>(new LinkedHashSet<>(Arrays.asList(profiles)));
-		Collections.reverse(applications);
-		Collections.reverse(envs);
-		List<String> labels;
-		if (label.contains(",")) {
-			labels = Arrays.asList(StringUtils.commaDelimitedListToStringArray(label));
-			Collections.reverse(labels);
-		}
-		else {
-			labels = Collections.singletonList(label);
-		}
-		for (String l : labels) {
-			for (String env : envs) {
-				for (String app : applications) {
-					addPropertySource(environment, app, env, l);
-				}
-			}
-			// add properties without profile, equivalent to foo.yml, application.yml
-			if (!configIncomplete) {
-				for (String app : applications) {
-					addPropertySource(environment, app, null, l);
-				}
-			}
-		}
-		return environment;
+    	Environment environment = new Environment(application, getProfiles(profile), label, null, null);
+    	List<String> applications = getApplications(application);
+    	List<String> envs = getEnvironments(profile);
+    	List<String> labels = getLabels(label);
+
+    	for (String l : labels) {
+        	for (String env : envs) {
+            	for (String app : applications) {
+                	addPropertySource(environment, app, env, l);
+            	}
+        	}
+        	if (!configIncomplete) {
+            	for (String app : applications) {
+                	addPropertySource(environment, app, null, l);
+            	}
+        	}
+    	}
+    	return environment;
+	}
+
+	private List<String> getApplications(String application) {
+    	if (!application.startsWith("application")) {
+        	application = "application," + application;
+    	}
+    	List<String> applications = new ArrayList<>(
+        	new LinkedHashSet<>(Arrays.asList(StringUtils.commaDelimitedListToStringArray(application))));
+    	Collections.reverse(applications);
+    	return applications;
+	}
+
+	private List<String> getEnvironments(String profile) {
+    	if (!StringUtils.hasText(profile)) {
+        	profile = "default";
+    	}
+    	if (configIncomplete && !profile.startsWith("default")) {
+        	profile = "default," + profile;
+    	}
+    	List<String> envs = new ArrayList<>(new LinkedHashSet<>(Arrays.asList(StringUtils.commaDelimitedListToStringArray(profile))));
+    	Collections.reverse(envs);
+    	return envs;
+	}
+
+	private List<String> getLabels(String label) {
+    	if (StringUtils.isEmpty(label)) {
+        	label = this.defaultLabel;
+    	}
+    	List<String> labels;
+    	if (label.contains(",")) {
+        	labels = Arrays.asList(StringUtils.commaDelimitedListToStringArray(label));
+        	Collections.reverse(labels);
+    	} else {
+        	labels = Collections.singletonList(label);
+    	}
+    	return labels;
 	}
 
 	@Override
