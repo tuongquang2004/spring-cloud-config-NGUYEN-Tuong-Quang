@@ -92,26 +92,31 @@ public class JdbcEnvironmentRepository implements EnvironmentRepository, Ordered
 	@Override
 	public Environment findOne(String application, String profile, String label) {
     	Environment environment = new Environment(application, getProfiles(profile), label, null, null);
-    	List<String> applications = getApplications(application);
-    	List<String> envs = getEnvironments(profile);
-    	List<String> labels = getLabels(label);
-
-    	for (String l : labels) {
-        	for (String env : envs) {
-            	for (String app : applications) {
-                	addPropertySource(environment, app, env, l);
-            	}
-        	}
-        	if (!configIncomplete) {
-            	for (String app : applications) {
-                	addPropertySource(environment, app, null, l);
-            	}
-        	}
-    	}
-    	return environment;
-	}
-
-	private List<String> getApplications(String application) {
+				List<String> applications = getApplications(application);
+				List<String> envs = getEnvironments(profile);
+				List<String> labels = getLabels(label);
+		
+				for (String l : labels) {
+					for (String env : envs) {
+						for (String app : applications) {
+							addPropertySource(environment, app, env, l);
+						}
+					}
+					if (!configIncomplete) {
+						for (String app : applications) {
+							addPropertySource(environment, app, null, l);
+						}
+					}
+				}
+				return environment;
+			}
+		
+			private String[] getProfiles(String profile) {
+				// TODO Auto-generated method stub
+				throw new UnsupportedOperationException("Unimplemented method 'getProfiles'");
+			}
+		
+			private List<String> getApplications(String application) {
     	if (!application.startsWith("application")) {
         	application = "application," + application;
     	}
