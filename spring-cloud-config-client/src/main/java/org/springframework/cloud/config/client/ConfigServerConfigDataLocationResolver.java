@@ -112,89 +112,95 @@ public class ConfigServerConfigDataLocationResolver
 	protected PropertyHolder loadProperties(ConfigDataLocationResolverContext context, String uris) {
 		Binder binder = context.getBinder();
 		BindHandler bindHandler = getBindHandler(context);
-
-		ConfigClientProperties configClientProperties;
-		if (context.getBootstrapContext().isRegistered(ConfigClientProperties.class)) {
-			configClientProperties = binder
-				.bind(ConfigClientProperties.PREFIX, Bindable.of(ConfigClientProperties.class), bindHandler)
-				.orElseGet(ConfigClientProperties::new);
-			boolean discoveryEnabled = context.getBinder()
-				.bind(CONFIG_DISCOVERY_ENABLED, Bindable.of(Boolean.class), getBindHandler(context))
-				.orElse(false);
-			// In the case where discovery is enabled we need to extract the config server
-			// uris, username, and password
-			// from the ConfigServiceMonitor. These are set in
-			// ConfigServerInstanceMonitor.refresh which will only
-			// be called the first time we fetch configuration.
-			// They will continue to be updated as HeartbeatEvents are received.
-			if (discoveryEnabled) {
-				ConfigServerInstanceMonitor instanceMonitor = context.getBootstrapContext()
-					.get(ConfigServerInstanceMonitor.class);
-
-				configClientProperties.setUri(instanceMonitor.getUri());
-				configClientProperties.setPassword(instanceMonitor.getPassword());
-				configClientProperties.setUsername(instanceMonitor.getUsername());
-			}
-		}
-		else {
-			configClientProperties = binder
-				.bind(ConfigClientProperties.PREFIX, Bindable.of(ConfigClientProperties.class), bindHandler)
-				.orElseGet(ConfigClientProperties::new);
-		}
-		if (!StringUtils.hasText(configClientProperties.getName())
-				|| "application".equals(configClientProperties.getName())) {
-			// default to spring.application.name if name isn't set
-			String applicationName = binder.bind("spring.application.name", Bindable.of(String.class), bindHandler)
-				.orElse("application");
-			configClientProperties.setName(applicationName);
-		}
-
+	
+		// Create ConfigClientProperties from binder
+		ConfigClientProperties configClientProperties = binder
+			.bind(ConfigClientProperties.PREFIX, Bindable.of(ConfigClientProperties.class), bindHandler)
+			.orElseGet(ConfigClientProperties::new);
+	
+		// Update configClientProperties (URI, username, password, application name)
+		updateConfigClientProperties(context, configClientProperties, uris);
+	
 		PropertyHolder holder = new PropertyHolder();
 		holder.properties = configClientProperties;
-		// bind retry, override later
+	
+		// Bind retry properties
 		holder.retryProperties = binder.bind(RetryProperties.PREFIX, RetryProperties.class)
 			.orElseGet(RetryProperties::new);
-
+	
+		// Update retry properties if URIs have query params
 		if (StringUtils.hasText(uris)) {
-			String[] uri = StringUtils.commaDelimitedListToStringArray(uris);
+			String[] uriArray = StringUtils.commaDelimitedListToStringArray(uris);
 			String paramStr = null;
-			for (int i = 0; i < uri.length; i++) {
-				int paramIdx = uri[i].indexOf('?');
+			for (int i = 0; i < uriArray.length; i++) {
+				int paramIdx = uriArray[i].indexOf('?');
 				if (paramIdx > 0) {
 					if (i == 0) {
-						// only gather params from first uri
-						paramStr = uri[i].substring(paramIdx + 1);
+						paramStr = uriArray[i].substring(paramIdx + 1);
 					}
-					uri[i] = uri[i].substring(0, paramIdx);
+					uriArray[i] = uriArray[i].substring(0, paramIdx);
 				}
 			}
+	
 			if (StringUtils.hasText(paramStr)) {
-				Properties properties = StringUtils
+				Properties propertiesMap = StringUtils
 					.splitArrayElementsIntoProperties(StringUtils.delimitedListToStringArray(paramStr, "&"), "=");
-				if (properties != null) {
+				if (propertiesMap != null) {
 					PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
-					map.from(() -> properties.getProperty("fail-fast"))
+					map.from(() -> propertiesMap.getProperty("fail-fast"))
 						.as(Boolean::valueOf)
 						.to(configClientProperties::setFailFast);
-					map.from(() -> properties.getProperty("max-attempts"))
+					map.from(() -> propertiesMap.getProperty("max-attempts"))
 						.as(Integer::valueOf)
 						.to(holder.retryProperties::setMaxAttempts);
-					map.from(() -> properties.getProperty("max-interval"))
+					map.from(() -> propertiesMap.getProperty("max-interval"))
 						.as(Long::valueOf)
 						.to(holder.retryProperties::setMaxInterval);
-					map.from(() -> properties.getProperty("multiplier"))
+					map.from(() -> propertiesMap.getProperty("multiplier"))
 						.as(Double::valueOf)
 						.to(holder.retryProperties::setMultiplier);
-					map.from(() -> properties.getProperty("initial-interval"))
+					map.from(() -> propertiesMap.getProperty("initial-interval"))
 						.as(Long::valueOf)
 						.to(holder.retryProperties::setInitialInterval);
 				}
 			}
-			configClientProperties.setUri(uri);
+	
+			configClientProperties.setUri(uriArray);
 		}
-
+	
 		return holder;
 	}
+	
+	/**
+	 * Update ConfigClientProperties
+	 */
+	private void updateConfigClientProperties(ConfigDataLocationResolverContext context,
+											  ConfigClientProperties properties, String uris) {
+		Binder binder = context.getBinder();
+		BindHandler bindHandler = getBindHandler(context);
+	
+		// If discovery enabled, take data from ConfigServerInstanceMonitor
+		boolean discoveryEnabled = binder
+			.bind(CONFIG_DISCOVERY_ENABLED, Bindable.of(Boolean.class), bindHandler)
+			.orElse(false);
+	
+		if (discoveryEnabled && context.getBootstrapContext().isRegistered(ConfigServerInstanceMonitor.class)) {
+			ConfigServerInstanceMonitor instanceMonitor = context.getBootstrapContext()
+				.get(ConfigServerInstanceMonitor.class);
+	
+			properties.setUri(instanceMonitor.getUri());
+			properties.setPassword(instanceMonitor.getPassword());
+			properties.setUsername(instanceMonitor.getUsername());
+		}
+	
+		// If didn't have application name, take one from spring.application.name
+		if (!StringUtils.hasText(properties.getName()) || "application".equals(properties.getName())) {
+			String applicationName = binder.bind("spring.application.name", Bindable.of(String.class), bindHandler)
+				.orElse("application");
+			properties.setName(applicationName);
+		}
+	}
+	
 
 	private BindHandler getBindHandler(ConfigDataLocationResolverContext context) {
 		return context.getBootstrapContext().getOrElse(BindHandler.class, null);
