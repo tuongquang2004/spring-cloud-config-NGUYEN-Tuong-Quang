@@ -153,22 +153,28 @@ public class EnvironmentController {
 
 	@GetMapping("/{name}-{profiles}.properties")
 	public ResponseEntity<String> properties(@PathVariable String name, @PathVariable String profiles,
-			@RequestParam(defaultValue = "true") boolean resolvePlaceholders) throws IOException {
-		return labelledProperties(name, profiles, null, resolvePlaceholders);
+        	@RequestParam(defaultValue = "true") boolean resolvePlaceholders) throws IOException {
+    	return propertiesInternal(name, profiles, null, resolvePlaceholders);
 	}
 
 	@GetMapping("/{label}/{name}-{profiles}.properties")
 	public ResponseEntity<String> labelledProperties(@PathVariable String name, @PathVariable String profiles,
-			@PathVariable String label, @RequestParam(defaultValue = "true") boolean resolvePlaceholders)
-			throws IOException {
-		validateProfiles(profiles);
-		Environment environment = labelled(name, profiles, label);
-		Map<String, Object> properties = convertToProperties(environment);
-		String propertiesString = getPropertiesString(properties);
-		if (resolvePlaceholders) {
-			propertiesString = resolvePlaceholders(prepareEnvironment(environment), propertiesString);
-		}
-		return getSuccess(propertiesString);
+        	@PathVariable String label, @RequestParam(defaultValue = "true") boolean resolvePlaceholders)
+        	throws IOException {
+    	return propertiesInternal(name, profiles, label, resolvePlaceholders);
+	}
+
+	// Private method used by both
+	private ResponseEntity<String> propertiesInternal(String name, String profiles, String label, boolean resolve)
+        	throws IOException {
+    	validateProfiles(profiles);
+    	Environment environment = labelled(name, profiles, label);
+    	Map<String, Object> props = convertToProperties(environment);
+    	String result = getPropertiesString(props);
+    	if (resolve) {
+        	result = resolvePlaceholders(prepareEnvironment(environment), result);
+    	}
+    	return getSuccess(result);
 	}
 
 	@GetMapping("{name}-{profiles}.json")
