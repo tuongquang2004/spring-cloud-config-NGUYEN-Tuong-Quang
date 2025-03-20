@@ -122,6 +122,7 @@ public class ConfigServerConfigDataResource extends ConfigDataResource {
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	private boolean uriEqual(String thisUriString, String thatUriString) {
 		try {
 			UriComponents thisUri = UriComponentsBuilder.fromHttpUrl(thisUriString).build();
@@ -138,6 +139,7 @@ public class ConfigServerConfigDataResource extends ConfigDataResource {
 	private int urisHashCode(String[] uris) {
 		return Arrays.stream(uris).mapToInt(uriString -> {
 			try {
+				@SuppressWarnings("deprecation")
 				UriComponents uriComponents = UriComponentsBuilder.fromHttpUrl(uriString).build();
 				return Objects.hash(uriComponents.getHost(), uriComponents.getPath(), uriComponents.getPort());
 			}
