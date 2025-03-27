@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.cloud.config.server.resource;
+package org.springframework.cloud.config.server;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,6 +26,8 @@ import java.util.Set;
 
 import org.springframework.cloud.config.server.config.ConfigServerProperties;
 import org.springframework.cloud.config.server.environment.SearchPathLocator;
+import org.springframework.cloud.config.server.resource.NoSuchResourceException;
+import org.springframework.cloud.config.server.resource.ResourceRepository;
 import org.springframework.cloud.config.server.support.PathUtils;
 import org.springframework.context.ResourceLoaderAware;
 import org.springframework.core.io.Resource;

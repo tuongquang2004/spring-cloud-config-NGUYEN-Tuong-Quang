@@ -18,8 +18,8 @@ package org.springframework.cloud.config.server.config;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.cloud.config.server.GenericResourceRepository;
 import org.springframework.cloud.config.server.environment.SearchPathLocator;
-import org.springframework.cloud.config.server.resource.GenericResourceRepository;
 import org.springframework.cloud.config.server.resource.ResourceRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
