@@ -45,6 +45,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.dao.DataAccessException;
 
 import static org.mockito.Mockito.*;
 
@@ -274,7 +275,7 @@ class RepositoryTest {
 	private JdbcTemplate jdbcTemplate;
 	
 	@InjectMocks
-	private MyRepository repository;
+	private JdbcEnvironmentRepository repository;
 	
 	@BeforeEach
 	void setUp() {
@@ -284,7 +285,7 @@ class RepositoryTest {
 	@Test
 	void whenDatabaseQueryFails_thenThrowConfigurationRetrievalException() {
 		when(jdbcTemplate.query(anyString(), any(ResultSetExtractor.class), any(), any(), any()))
-			thenThrow(new DataAccessException("DB error") {});
+			.thenThrow(new DataAccessException("DB error") {});
 	
 		assertThrows(ConfigurationRetrievalException.class, () -> {
 			repository.findOne("app", "default", "main");

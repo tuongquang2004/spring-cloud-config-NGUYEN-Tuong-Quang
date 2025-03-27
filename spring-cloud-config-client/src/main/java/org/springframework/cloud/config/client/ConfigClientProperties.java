@@ -527,4 +527,9 @@ public class ConfigClientProperties {
 
 	}
 
+    public Object getRetryProperties() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getRetryProperties'");
+    }
+
 }
